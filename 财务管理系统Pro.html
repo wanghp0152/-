@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人财务管理系统</title>
+  <style>
+    body { 
+      font-family: 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif; 
+      margin: 0; 
+      padding: 15px; 
+      background-color: #f5f5f5;
+      font-size: 18px; /* 关键修改：增大字体大小 */
+      line-height: 1.6;
+    }
+    .container { 
+      max-width: 95%; 
+      margin: 0 auto; 
+      background: white; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      padding: 20px;
+      overflow-x: auto; /* 确保在手机上横向滚动时不会溢出 */
+    }
+    h1 { 
+      text-align: center; 
+      color: #2c3e50; 
+      margin-bottom: 25px;
+      font-size: 24px; /* 增大标题 */
+    }
+    .form-group { 
+      margin-bottom: 22px; 
+    }
+    label { 
+      display: block; 
+      margin-bottom: 8px; 
+      font-weight: bold; 
+      color: #34495e;
+      font-size: 18px; /* 增大标签文字 */
+    }
+    input, select { 
+      width: 100%; 
+      padding: 14px; /* 增大输入框内边距 */
+      border: 1px solid #ddd; 
+      border-radius: 8px; 
+      font-size: 18px; /* 增大输入文字 */
+      background-color: #fff;
+    }
+    button { 
+      background-color: #007bff; 
+      color: white; 
+      border: none; 
+      padding: 16px 20px; /* 增大按钮尺寸 */
+      border-radius: 8px; 
+      cursor: pointer; 
+      font-size: 18px; /* 增大按钮文字 */
+      width: 100%;
+      transition: background-color 0.3s;
+    }
+    button:hover { 
+      background-color: #0056b3; 
+    }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-top: 25px;
+      font-size: 18px; /* 增大表格文字 */
+    }
+    th, td { 
+      padding: 14px 10px; 
+      text-align: left; 
+      border-bottom: 1px solid #eee;
+    }
+    th { 
+      background-color: #f8f9fa; 
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    .summary { 
+      display: flex; 
+      justify-content: space-around; 
+      margin: 25px 0;
+      flex-wrap: wrap; /* 确保在小屏幕下换行 */
+    }
+    .summary-item { 
+      text-align: center; 
+      padding: 16px; 
+      background: #e9ecef; 
+      border-radius: 8px; 
+      width: 30%; 
+      margin-bottom: 15px; /* 增加间距 */
+      min-width: 250px; /* 确保小屏幕下不会太窄 */
+    }
+    .summary-item h3 { 
+      color: #34495e; 
+      margin-bottom: 8px;
+      font-size: 18px; /* 增大总结标题 */
+    }
+    .summary-item p { 
+      font-size: 22px; /* 增大金额字体 */
+      font-weight: bold;
+      color: #27ae60;
+      margin: 0;
+    }
+    .income { color: #27ae60; } /* 收入颜色 */
+    .expense { color: #e74c3c; } /* 支出颜色 */
+    
+    /* 为手机优化：增大触摸区域 */
+    @media (max-width: 480px) {
+      .summary { 
+        flex-direction: column; 
+        gap: 10px; 
+      }
+      .summary-item { 
+        width: 100% !important; 
+        min-width: auto; 
+      }
+      button { 
+        padding: 14px 0; 
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>个人财务管理系统</h1>
+
+  <!-- 记录表单 -->
+  <div id="recordForm">
+    <h2>添加新记录</h2>
+    <div class="form-group">
+      <label>类型:</label>
+      <select id="type">
+        <option value="income">收入</option>
+        <option value="expense">支出</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>分类:</label>
+      <select id="category">
+        <option value="salary">工资</option>
+        <option value="bonus">奖金</option>
+        <option value="food">餐饮</option>
+        <option value="transport">交通</option>
+        <option value="entertainment">娱乐</option>
+        <option value="other">其他</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>金额:</label>
+      <input type="number" id="amount" placeholder="请输入金额" step="0.01" min="0">
+    </div>
+    <div class="form-group">
+      <label>备注:</label>
+      <input type="text" id="note" placeholder="备注信息">
+    </div>
+    <button onclick="addRecord()">添加记录</button>
+  </div>
+
+  <!-- 总结卡片 -->
+  <div class="summary">
+    <div class="summary-item">
+      <h3>总收入</h3>
+      <p id="totalIncome">¥0.00</p>
+    </div>
+    <div class="summary-item">
+      <h3>总支出</h3>
+      <p id="totalExpense">¥0.00</p>
+    </div>
+    <div class="summary-item">
+      <h3>结余</h3>
+      <p id="balance">¥0.00</p>
+    </div>
+  </div>
+
+  <!-- 记录列表 -->
+  <h2>财务记录</h2>
+  <table id="recordsTable">
+    <thead>
+      <tr>
+        <th>日期</th>
+        <th>类型</th>
+        <th>分类</th>
+        <th>金额</th>
+        <th>备注</th>
+      </tr>
+    </thead>
+    <tbody id="recordsBody">
+    </tbody>
+  </table>
+</div>
+
+<script>
+  let records = JSON.parse(localStorage.getItem('financialRecords')) || [];
+
+  function addRecord() {
+    const type = document.getElementById('type').value;
+    const category = document.getElementById('category').value;
+    const amount = parseFloat(document.getElementById('amount').value);
+    const note = document.getElementById('note').value;
+
+    if (!amount || isNaN(amount)) {
+      alert('请输入有效金额');
+      return;
+    }
+
+    const newRecord = {
+      id: Date.now(),
+      date: new Date().toLocaleDateString(),
+      type,
+      category,
+      amount,
+      note
+    };
+
+    records.push(newRecord);
+    localStorage.setItem('financialRecords', JSON.stringify(records));
+    renderRecords();
+    updateSummary();
+    // 清空表单
+    document.getElementById('amount').value = '';
+    document.getElementById('note').value = '';
+  }
+
+  function renderRecords() {
+    const tbody = document.getElementById('recordsBody');
+    tbody.innerHTML = '';
+    records.forEach(record => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${record.date}</td>
+        <td>${record.type === 'income' ? '收入' : '支出'}</td>
+        <td>${getCategoryText(record.category)}</td>
+        <td style="color: ${record.type === 'income' ? '#27ae60' : '#e74c3c'}">¥${record.amount.toFixed(2)}</td>
+        <td>${record.note || '-'}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  function getCategoryText(value) {
+    const map = {
+      salary: '工资',
+      bonus: '奖金',
+      food: '餐饮',
+      transport: '交通',
+      entertainment: '娱乐',
+      other: '其他'
+    };
+    return map[value] || value;
+  }
+
+  function updateSummary() {
+    const totalIncome = records.filter(r => r.type === 'income')
+                              .reduce((sum, r) => sum + r.amount, 0);
+    const totalExpense = records.filter(r => r.type === 'expense')
+                                .reduce((sum, r) => sum + r.amount, 0);
+    const balance = totalIncome - totalExpense;
+
+    document.getElementById('totalIncome').textContent = `¥${totalIncome.toFixed(2)}`;
+    document.getElementById('totalExpense').textContent = `¥${totalExpense.toFixed(2)}`;
+    document.getElementById('balance').textContent = `¥${balance.toFixed(2)}`;
+  }
+
+  // 初始化
+  renderRecords();
+  updateSummary();
+</script>
+</body>
+</html>
